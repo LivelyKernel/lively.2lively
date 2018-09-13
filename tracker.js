@@ -82,11 +82,17 @@ export default class L2LTracker extends L2LConnection {
   }
 
   removeDisconnectedClients() {
-    var ids = Array.from(this.clients.keys()),
-        toRemove = ids.filter(id => !this.getSocketForClientId(id));
-    toRemove.forEach(id => this.clients.delete(id));
-    if (toRemove.length)
-      console.log(`[l2l] ${this} removing disconnected clients ${ids.join(",")}`)
+    let ids = Array.from(this.clients.keys());
+    let toRemove = ids.filter(id => !this.getSocketForClientId(id));
+    toRemove = toRemove.map(id => {
+      let client = this.clients.get(id);
+      this.clients.delete(id);
+      return `${id} (${client ? client.socketId : ''})`;
+    });
+
+    if (toRemove.length) {
+      console.log(`[l2l] ${this} removing disconnected clients ${toRemove.join(',')}`);
+    }
   }
 
   open() {
@@ -163,8 +169,9 @@ export default class L2LTracker extends L2LConnection {
   }
 
   unregisterClient(_, answerFn, socket) {
-    var clientId = this.getClientIdForSocketId(socket.id);
-    this.debug && console.log(`[l2l] ${this} got unregister request ${clientId}`);
+    let clientId = this.getClientIdForSocketId(socket.id);
+    let client = this.clients.get(clientId);
+    console.log(`[l2l] ${this} got unregister request ${clientId} (${client ? client.socketId : ''})`);
     this.clients.delete(clientId);
     typeof answerFn === "function" && answerFn();
   }
